@@ -7,7 +7,6 @@ through the Box Api """
 
 
 from boxsdk import Client, JWTAuth
-import click
 import json
 
 DEADDROP_ID = 890210016453
