@@ -27,7 +27,7 @@ from colorama import Fore, Style
 from win32com import client
 import win32api
 import pathlib
-from boxDeadDrop import *
+from magnetModuleList import *
 
 # In[2]:
 
