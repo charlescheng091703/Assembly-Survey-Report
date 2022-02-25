@@ -548,8 +548,11 @@ def generate_excel_report(module_name):
     df = read_csv(module_name+'/CENTERS.csv',col_names=True)
     append_df_to_excel(filename_report,df,sheet_name="Alignment Summary",startcol=1,startrow=24)
     
-    df = read_csv(module_name+'/M1_VERTEX.csv',col_names=True)
-    append_df_to_excel(filename_report,df,sheet_name="Alignment Summary",startcol=1,startrow=40)
+    try:
+        df = read_csv(module_name+'/M1_VERTEX.csv',col_names=True)
+        append_df_to_excel(filename_report,df,sheet_name="Alignment Summary",startcol=1,startrow=40)
+    except:
+        print("M1 data excluded...")
     
     # data = extract_excel_data(module_name+'/CDB Magnet List.xlsx',[3,4],start_row=3,end_row=13)
     # write_excel(filename_report,'Alignment Summary',data,['B11','C11'])
@@ -601,6 +604,9 @@ def generate_excel_report(module_name):
     autosize_row_height(filename_report,'Installation Fiducials',size='small')
     autosize_row_height(filename_report,'Transformations')
     autosize_row_height(filename_report,'USMN Raw')
+    wb = load_workbook(filename_report)
+    wb.active = 0
+    wb.save(filename_report)
     print("Assembly survey report created successfully...")
 
     savefile_to_pdf(filename_report)
