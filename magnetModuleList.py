@@ -3,9 +3,9 @@
 in a dictionary.   The dictionary is then jsonified and put into a file """
 
 from CdbApiFactory import CdbApiFactory
-import click
+#import click
 import json
-from rich import print
+#from rich import print
 
 CDBItemID = {}
 CDBItemID['DLMA'] = 110353
