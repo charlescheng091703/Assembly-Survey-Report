@@ -43,14 +43,14 @@ def get_modules():
             for assembly_item in item_hierarchyOBJ.child_items:
                 for mag_index in range(len(MagnetOrder[magnet_module])):
                     element_name = MagnetPrefix[magnet_module] + MagnetOrder[magnet_module][mag_index]
-                    if element_name == assembly_item.element_name and assembly_item.item != None:
+                    if element_name == assembly_item.derived_element_name and assembly_item.item != None:
                         module_data = {}
                         module_data['order'] = mag_index
                         module_data['label'] = MagnetOrder[magnet_module][mag_index]
                         module_data['name'] = assembly_item.derived_item.name
                         module_data['url'] = url_prefix + str(assembly_item.item.id)
                         module_data['serial'] = assembly_item.item.name
-                        module_assembly_assignments[assembly_item.element_name] = module_data
+                        module_assembly_assignments[assembly_item.derived_element_name] = module_data
             magnet_module_assignments[inv_item.name] = module_assembly_assignments
 #    print(json.dumps(magnet_module_assignments,indent=3))
     return(magnet_module_assignments)
@@ -62,5 +62,6 @@ def read_data_test(module):
 
 
 if __name__ == "__main__":
-    print(read_data_test("DLMA-1010"))
+    print(json.dumps(MAGNETMODULES,indent=3))    
+
           
