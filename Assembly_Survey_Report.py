@@ -560,7 +560,7 @@ def generate_excel_report(module_name):
     name, url, serial = extract_magnet_list(module_name)
     write_excel_col(filename_report, 'Alignment Summary', name, start_index='B11')
     write_excel_col(filename_report, 'Alignment Summary', url, start_index='C11')
-    write_excel_col(filename_report, 'Alignment Summary', serial, start_index='D11')
+    write_excel_col(filename_report, 'Alignment Summary', serial, start_index='E11')
     print("Alignment Summary tab complete...")
     
     copy_paste_wrksht(module_name+'/FIDUCIALS.xls',filename_report,'Installation Fiducials')
