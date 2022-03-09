@@ -1,10 +1,3 @@
-# %%
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[1]:
-
-
 import pandas as pd
 from datetime import date
 import openpyxl
@@ -288,7 +281,20 @@ def write_excel_col(filename, sheet_name, values, start_index='A1'):
             ws[col+str(row+i)].alignment = Alignment(horizontal='left')
             
     wb.save(filename)
-
+    
+def write_excel_row(filename, sheet_name, values, start_index='A1'):
+    
+    wb = load_workbook(filename)
+    ws = wb[sheet_name]
+    
+    col = start_index[0]
+    row = int(start_index[1:])
+    for i in range(len(values)):
+        ws[chr(ord(col)+i)+str(row)] = values[i]
+        ws[chr(ord(col)+i)+str(row)].font = Font(name="Calibri", size=11, color="00000000")
+        ws[chr(ord(col)+i)+str(row)].alignment = Alignment(horizontal='left')
+            
+    wb.save(filename)
 
 # In[7]:
 
@@ -531,7 +537,7 @@ def generate_excel_report(module_name):
     print("Executing program...")
     filename_report = module_name + '/Report ' + module_name + ' Assembly Survey.xlsx'
     filename_report = os.path.abspath(filename_report)
-    shutil.copy('Full_Module_Survey_Report_Blank.xlsx', filename_report)
+    shutil.copy('Form_DLM_SurveyReport.xlsx', filename_report)
     
     thin = Side(border_style="thin", color="00000000")
     regular = Side(border_style="thin", color="00D3D3D3")
@@ -550,12 +556,13 @@ def generate_excel_report(module_name):
     
     try:
         df = read_csv(module_name+'/M1_VERTEX.csv',col_names=True)
-        append_df_to_excel(filename_report,df,sheet_name="Alignment Summary",startcol=1,startrow=40)
+        M1_data = []
+        M1_data.append(str(df.index.name))
+        for i in df.columns:
+            M1_data.append(float(i))
+        write_excel_row(filename_report,'Alignment Summary',M1_data,'B41')
     except:
         print("M1 data excluded...")
-    
-    # data = extract_excel_data(module_name+'/CDB Magnet List.xlsx',[3,4],start_row=3,end_row=13)
-    # write_excel(filename_report,'Alignment Summary',data,['B11','C11'])
     
     name, url, serial = extract_magnet_list(module_name)
     write_excel_col(filename_report, 'Alignment Summary', name, start_index='B11')
@@ -580,8 +587,8 @@ def generate_excel_report(module_name):
     stylize_cells(filename_report,'Alignment Summary',['B1','B1'],bold=True,align='center')
     stylize_cells(filename_report,'Alignment Summary',['B41','B41'],unbold=True,align='center',backgrd_color='00fedcd6',thick_left=True)
     stylize_cells(filename_report,'Alignment Summary',['C41','E41'],unbold=True,align='center',backgrd_color='00f2f2f2',number_decimals=6)
-    stylize_cells(filename_report,'Alignment Summary',['F41','G41'],unbold=True,align='center',number_decimals=6)
-    stylize_cells(filename_report,'Alignment Summary',['H41','H41'],unbold=True,align='center',thick_right=True,number_decimals=6)
+    stylize_cells(filename_report,'Alignment Summary',['F41','G41'],unbold=True,align='center',number_decimals=3)
+    stylize_cells(filename_report,'Alignment Summary',['H41','H41'],unbold=True,align='center',thick_right=True,number_decimals=3)
     
     autofit_columns(filename_report,'Transformations')
     autofit_columns(filename_report,'USMN Raw')
