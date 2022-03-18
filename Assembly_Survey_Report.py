@@ -1,5 +1,4 @@
 import pandas as pd
-from datetime import date
 import openpyxl
 from openpyxl import load_workbook
 from openpyxl.utils import get_column_letter
@@ -7,12 +6,9 @@ from pathlib import Path
 from copy import copy
 from typing import Union, Optional
 import numpy as np
-from xls2xlsx import XLS2XLSX
 import xlwings as xw
 import shutil
-from xlwings.constants import DeleteShiftDirection
 from openpyxl.styles import NamedStyle, Font, Border, Side, Alignment, PatternFill
-from datetime import datetime
 import os
 import ipywidgets as widgets
 from IPython.display import display, clear_output
@@ -21,13 +17,9 @@ from win32com import client
 import win32api
 import pathlib
 from magnetModuleList import *
-
-# In[2]:
+from datetime import date, datetime 
 
 widget_out = widgets.Output(layout={'border': '1px solid black'})
-
-# In[3]:
-
 
 ########## Credit: MaxU on Stack Overflow ###########
 ##### https://www.linkedin.com/in/maxuzunov/ ########
@@ -234,9 +226,8 @@ def append_df_to_excel(
         wb.save(filename)
         wb.close()
 
-
-# In[4]:
-
+#####################################################
+#####################################################
 
 def read_csv(filename, col_names = False):
     
@@ -247,19 +238,11 @@ def read_csv(filename, col_names = False):
     
     return df
 
-
-# In[5]:
-
-
 def extract_csv_data(dataframe, index_names, column_names=['Value']):
     
     values = [[dataframe.loc[index][column] for column in column_names] for index in index_names]
     
     return values
-
-
-# In[6]:
-
 
 def write_excel_col(filename, sheet_name, values, start_index='A1'):
     
@@ -296,17 +279,10 @@ def write_excel_row(filename, sheet_name, values, start_index='A1'):
             
     wb.save(filename)
 
-# In[7]:
-
-
 def write_excel(filename, sheet_name, values, start_index):
     
     for i in range(len(values)):
         write_excel_col(filename, sheet_name, values[i], start_index[i])
-
-
-# In[8]:
-
 
 def extract_excel_data(filename, columns, sheet_name=None, start_row=1, end_row=None,copy_formula=True):
     
@@ -322,10 +298,6 @@ def extract_excel_data(filename, columns, sheet_name=None, start_row=1, end_row=
     
     return values
 
-
-# In[9]:
-
-
 def copy_paste_wrksht(workbook1, workbook2, sheet_name):
     
     app = xw.App(visible=False)
@@ -339,10 +311,6 @@ def copy_paste_wrksht(workbook1, workbook2, sheet_name):
     wb2.save()
     app.kill()
 
-
-# In[10]:
-
-
 def delete_images(workbook, sheet_name):
     
     wb = load_workbook(workbook)
@@ -350,49 +318,56 @@ def delete_images(workbook, sheet_name):
         wb[sheet]._images.clear()
     wb.save(workbook)
 
-
-# In[11]:
-
-
-def stylize_cells(workbook, sheet_name, cell_bounds, align=None, number_decimals=False, backgrd_color=None, border=None, thick_right=None, thick_left=None, thick_top=None, thick_bottom=None, bold=False, num_indent=False, unbold=False):
+def stylize_cells(workbook, sheet_name, cell_bounds, align=None, number_decimals=False, backgrd_color=None, thick_right=None, thick_left=None, thick_top=None, thick_bottom=None, bold=False, num_indent=False, unbold=False, border=None):
     
     wb = load_workbook(workbook)
     ws = wb[sheet_name]
     thick = Side(border_style="thick", color="00000000")
-    if border == None:
-        border = Side(border_style="thin", color="00000000")
+    if border != None:
+        thin = Side(border_style="thin", color="00D3D3D3")
+    else:
+        thin = Side(border_style="thin", color="00000000")
+    
+    border_format_exec = "ws.cell(row, col).border = Border("
+    if thick_top != None:
+        border_format_exec += "top=thick,"
+    else:
+        border_format_exec += "top=thin,"
+    if thick_left != None:
+        border_format_exec += "left=thick,"
+    else:
+        border_format_exec += "left=thin,"
+    if thick_right != None:
+        border_format_exec += "right=thick,"
+    else:
+        border_format_exec += "right=thin,"
+    if thick_bottom != None:
+        border_format_exec += "bottom=thick)"
+    else:
+        border_format_exec += "bottom=thin)"
+
+    if number_decimals is not False:
+        number_format_exec = "ws.cell(row, col).number_format = '0."
+        for i in range(number_decimals):
+            number_format_exec += "0"
+        number_format_exec += "'"
+
     for col in range(ord(cell_bounds[0][0])-64,ord(cell_bounds[1][0])-63):
         for row in range(int(cell_bounds[0][1:]),int(cell_bounds[1][1:])+1):
             if align != None:
                 ws.cell(row, col).alignment = Alignment(horizontal=align)
             if bold:
                 ws.cell(row, col).font = Font(size=16,bold=True)
-            else:
-                ws.cell(row, col).border = Border(top=border, left=border, right=border, bottom=border)
             if unbold:
                 ws.cell(row, col).font = Font(size=11,bold=False)
-            if thick_right != None:
-                ws.cell(row, col).border = Border(top=border, left=border, right=thick, bottom=border)
-            if thick_left != None:
-                ws.cell(row, col).border = Border(top=border, left=thick, right=border, bottom=border)
-            if thick_top != None:
-                ws.cell(row, col).border = Border(top=thick, left=border, right=border, bottom=border)
-            if thick_bottom != None:
-                ws.cell(row, col).border = Border(top=border, left=border, right=border, bottom=thick)
+            exec(border_format_exec)
             if number_decimals is not False:
-                if number_decimals == 3:
-                    ws.cell(row, col).number_format = '0.000'
-                elif number_decimals == 6:
-                    ws.cell(row, col).number_format = '0.000000'
+                exec(number_format_exec)
             if num_indent is not False:
                 ws.cell(row, col).alignment = Alignment(horizontal=align, indent=num_indent)
             if backgrd_color != None:
                 ws.cell(row, col).fill = PatternFill(start_color=backgrd_color, end_color=backgrd_color, fill_type = "solid")
     wb.save(workbook)
-
-
-# In[12]:
-
 
 def remove_rows(workbook, sheet_name, row_bounds='1:1'):
     
@@ -401,10 +376,6 @@ def remove_rows(workbook, sheet_name, row_bounds='1:1'):
     wb.sheets[sheet_name].range(row_bounds).delete() 
     wb.save()
     app.kill()
-
-
-# In[13]:
-
 
 def autosize_row_height(workbook, sheet_name,size=False):
     
@@ -425,10 +396,6 @@ def autosize_row_height(workbook, sheet_name,size=False):
             
     wb.save(workbook)
 
-
-# In[14]:
-
-
 def autofit_columns(workbook, sheet_name):
     
     wb = load_workbook(workbook)
@@ -436,10 +403,10 @@ def autofit_columns(workbook, sheet_name):
     
     for col in worksheet.columns:
         max_length = 0
-        column = col[0].column_letter # Get the column name
+        column = col[0].column_letter
         if column != 'A':
             for cell in col:
-                try: # Necessary to avoid error on empty cells
+                try:
                     if len(str(cell.value)) > max_length:
                         max_length = len(str(cell.value))
                 except:
@@ -448,10 +415,6 @@ def autofit_columns(workbook, sheet_name):
             worksheet.column_dimensions[column].width = adjusted_width
         
     wb.save(workbook)
-
-
-# In[15]:
-
 
 def no_fill(workbook, sheet_name):
     
@@ -464,10 +427,6 @@ def no_fill(workbook, sheet_name):
             cell.fill = no_fill
 
     wb.save(workbook)
-
-
-# In[16]:
-
 
 def log_entry(filename, data):
     
@@ -491,8 +450,6 @@ def log_entry(filename, data):
     ws.cell(row_write, 6).number_format = '0.000000'
     
     wb.save("Report_Log.xlsx")
-
-# In[17]:
 
 def extract_RMS(workbook, sheet_name, bounds):
 
@@ -529,120 +486,6 @@ def extract_magnet_list(module_name):
     
     return label, url, serial
 
-# In[19]:
-
-#@widget_out.capture()
-def generate_excel_report(module_name):
-    
-    print("Executing program...")
-    filename_report = module_name + '/Report ' + module_name + ' Assembly Survey.xlsx'
-    filename_report = os.path.abspath(filename_report)
-    shutil.copy('Form_DLM_SurveyReport.xlsx', filename_report)
-    
-    thin = Side(border_style="thin", color="00000000")
-    regular = Side(border_style="thin", color="00D3D3D3")
-    thick = Side(border_style="thick", color="00000000")
-    
-    df = read_csv(module_name+'/INFO.csv')
-    data = extract_csv_data(df,['Survey Date:','Surveyor(s):','Instrument s/n:','SA Version:','SA Filename:'])
-    data[4][0] = data[4][0][data[4][0].rfind('\\')+1:]
-    data = [item[0] for item in data]
-    data.append(date.today().strftime("%B %d, %Y"))
-    write_excel_col(filename_report,'Alignment Summary',data,'C3')
-    write_excel_col(filename_report,'Alignment Summary',[module_name],'B1')
-    
-    df = read_csv(module_name+'/CENTERS.csv',col_names=True)
-    append_df_to_excel(filename_report,df,sheet_name="Alignment Summary",startcol=1,startrow=24)
-    
-    try:
-        df = read_csv(module_name+'/M1_VERTEX.csv',col_names=True)
-        M1_data = []
-        M1_data.append(str(df.index.name))
-        for i in df.columns:
-            M1_data.append(float(i))
-        write_excel_row(filename_report,'Alignment Summary',M1_data,'B41')
-    except:
-        print("M1 data excluded...")
-    
-    name, url, serial = extract_magnet_list(module_name)
-    write_excel_col(filename_report, 'Alignment Summary', name, start_index='B11')
-    write_excel_col(filename_report, 'Alignment Summary', url, start_index='C11')
-    write_excel_col(filename_report, 'Alignment Summary', serial, start_index='E11')
-    print("Alignment Summary tab complete...")
-    
-    copy_paste_wrksht(module_name+'/FIDUCIALS.xls',filename_report,'Installation Fiducials')
-    copy_paste_wrksht(module_name+'/TRANSFORMS.xls',filename_report,'Transformations')
-    copy_paste_wrksht(module_name+'/USMN.xls',filename_report,'USMN Raw')
-    print("Installation Fiducials tab complete...")
-    print("Transformations tab complete...")
-    print("USMN Raw tab complete...")
-
-    delete_images(filename_report,['Installation Fiducials','Transformations','USMN Raw'])
-    
-    stylize_cells(filename_report,'Alignment Summary',['F26','H33'],align='right',number_decimals=3,num_indent=2)
-    stylize_cells(filename_report,'Alignment Summary',['C26','E33'],align='right',number_decimals=6,backgrd_color='00ffffcd',num_indent=2)
-    stylize_cells(filename_report,'Alignment Summary',['B25','B33'],align='center',backgrd_color='00eef5e9')
-    stylize_cells(filename_report,'Alignment Summary',['C25','H25'],align='center',backgrd_color='00eef5e9')
-    stylize_cells(filename_report,'Alignment Summary',['H25','H33'])
-    stylize_cells(filename_report,'Alignment Summary',['B1','B1'],bold=True,align='center')
-    stylize_cells(filename_report,'Alignment Summary',['B41','B41'],unbold=True,align='center',backgrd_color='00fedcd6',thick_left=True)
-    stylize_cells(filename_report,'Alignment Summary',['C41','E41'],unbold=True,align='center',backgrd_color='00f2f2f2',number_decimals=6)
-    stylize_cells(filename_report,'Alignment Summary',['F41','G41'],unbold=True,align='center',number_decimals=3)
-    stylize_cells(filename_report,'Alignment Summary',['H41','H41'],unbold=True,align='center',thick_right=True,number_decimals=3)
-    
-    autofit_columns(filename_report,'Transformations')
-    autofit_columns(filename_report,'USMN Raw')
-    no_fill(filename_report,'Transformations')
-    no_fill(filename_report,'USMN Raw')
-    
-    print("Stylizing report...")
-    remove_rows(filename_report,'Installation Fiducials',row_bounds='1:9')
-    remove_rows(filename_report,'Transformations',row_bounds='1:9')
-    remove_rows(filename_report,'USMN Raw',row_bounds='1:9')
-    
-    stylize_cells(filename_report,'Installation Fiducials',['A1','A1'],align='center',border=regular)
-    stylize_cells(filename_report,'Installation Fiducials',['C2','E3'],align='right',border=regular)
-    stylize_cells(filename_report,'Installation Fiducials',['A2','B100'],align='left',border=regular)
-    stylize_cells(filename_report,'Installation Fiducials',['C4','E100'],align='center',number_decimals=6,border=regular)
-    
-    stylize_cells(filename_report,'Transformations',['A1','L700'], border=regular)
-    stylize_cells(filename_report,'USMN Raw',['A1','J450'], border=regular)
-
-    autosize_row_height(filename_report,'Installation Fiducials',size='small')
-    autosize_row_height(filename_report,'Transformations')
-    autosize_row_height(filename_report,'USMN Raw')
-    wb = load_workbook(filename_report)
-    wb.active = 0
-    wb.save(filename_report)
-    print("Assembly survey report created successfully...")
-
-    savefile_to_pdf(filename_report)
-    print("Alignment summary tab exported to PDF...")
-
-    archive_filename = 'Archive\Report ' + module_name + ' Assembly Survey'
-    os.system('copy \"' + module_name + '\Report ' + module_name + ' Assembly Survey.xlsx' + '\" \"' + archive_filename + '.xlsx' + '\"')
-    os.system('copy \"' + module_name + '\Report ' + module_name + ' Assembly Survey.pdf' + '\" \"' + archive_filename + '.pdf' + '\"')
-    print("Report saved to archive folder...")
-
-    data = extract_RMS(filename_report,'Alignment Summary','C36:E36')
-    log_entry(filename_report,data)
-    print("Entry created in log sheet...")
-    print("Done!")
-
-# In[18]:
-
-@widget_out.capture()
-def on_button_clicked(b):
-
-    clear_output(wait=False)
-    if len(module_name.value) == 0:
-        print(Fore.RED + "Please enter the module name." + Style.RESET_ALL)
-    else:
-        generate_excel_report(module_name.value)
-
-# In[19]:
-
-@widget_out.capture()
 def savefile_to_pdf(excel_file):
 
     pdf_file = excel_file[:-5] + '.pdf'
@@ -663,10 +506,131 @@ def savefile_to_pdf(excel_file):
     finally:
         wb.Close()
         excel.Quit()
+        
+@widget_out.capture()
+def on_button_clicked(b):
 
-# In[20]:
+    clear_output(wait=False)
+    if len(module_names.value) == 0:
+        print(Fore.RED + "Please enter the module name." + Style.RESET_ALL)
+    else:
+        generate_excel_reports(module_names.value)
 
-module_name = widgets.Text(value='DLM#-1###', description='Module name:', disabled=False,
-                                  style = {'description_width': 'initial'}, layout=widgets.Layout(width="auto", height="auto"))
+def generate_excel_report(module_name):
+    
+    print("\033[1mGenerating "+module_name+" Report...\033[0m",end="\n")
+    filename_report = module_name + '/Report ' + module_name + ' Assembly Survey.xlsx'
+    filename_report = os.path.abspath(filename_report)
+    module_type = module_name[0]
+    if module_type == 'D':
+        shutil.copy('Form_DLM_SurveyReport.xlsx', filename_report)
+    elif module_type == 'F':
+        shutil.copy('Form_FODO_SurveyReport.xlsx', filename_report)
+    elif module_type == 'Q':
+        shutil.copy('Form_QMQ_SurveyReport.xlsx', filename_report)
+    
+    try:
+        df = read_csv(module_name+'/M1_VERTEX.csv',col_names=True)
+        M1_data = []
+        M1_data.append(str(df.index.name))
+        for i in df.columns:
+            M1_data.append(float(i))
+        write_excel_row(filename_report,'Alignment Summary',M1_data,'B41')
+    except:
+        print("M1 data excluded...",end="\n")
+
+    print("Progress: 0%   [                                                                      ]",end="\r")
+    df = read_csv(module_name+'/INFO.csv')
+    data = extract_csv_data(df,['Survey Date:','Surveyor(s):','Instrument s/n:','SA Version:','SA Filename:'])
+    data[4][0] = data[4][0][data[4][0].rfind('\\')+1:]
+    data = [item[0] for item in data]
+    data.append(date.today().strftime("%B %d, %Y"))
+    write_excel_col(filename_report,'Alignment Summary',data,'C3')
+    write_excel_col(filename_report,'Alignment Summary',[module_name],'B1')
+    
+    df = read_csv(module_name+'/CENTERS.csv',col_names=True)
+    append_df_to_excel(filename_report,df,sheet_name="Alignment Summary",startcol=1,startrow=24)
+    
+    name, url, serial = extract_magnet_list(module_name)
+    num_magnets = len(name)
+    write_excel_col(filename_report, 'Alignment Summary', name, start_index='B11')
+    write_excel_col(filename_report, 'Alignment Summary', url, start_index='C11')
+    write_excel_col(filename_report, 'Alignment Summary', serial, start_index='E11')
+    print("Progress: 14%  [##########                                                            ]",end="\r")
+    
+    copy_paste_wrksht(module_name+'/FIDUCIALS.xls',filename_report,'Installation Fiducials')
+    copy_paste_wrksht(module_name+'/TRANSFORMS.xls',filename_report,'Transformations')
+    copy_paste_wrksht(module_name+'/USMN.xls',filename_report,'USMN Raw')
+    
+    print("Progress: 28%  [####################                                                  ]",end="\r")
+    delete_images(filename_report,['Installation Fiducials','Transformations','USMN Raw'])
+    
+    stylize_cells(filename_report,'Alignment Summary',['F26','H33'],align='right',number_decimals=3,num_indent=2)
+    stylize_cells(filename_report,'Alignment Summary',['C26','E33'],align='right',number_decimals=6,backgrd_color='00ffffcd',num_indent=2)
+    stylize_cells(filename_report,'Alignment Summary',['B25','B33'],align='center',backgrd_color='00eef5e9')
+    stylize_cells(filename_report,'Alignment Summary',['C25','H25'],align='center',backgrd_color='00eef5e9')
+    stylize_cells(filename_report,'Alignment Summary',['H25','H33'])
+    stylize_cells(filename_report,'Alignment Summary',['B1','B1'],bold=True,align='center',border=False)
+    stylize_cells(filename_report,'Alignment Summary',['B41','B41'],unbold=True,align='center',backgrd_color='00fedcd6',thick_left=True)
+    stylize_cells(filename_report,'Alignment Summary',['C41','E41'],unbold=True,align='center',backgrd_color='00f2f2f2',number_decimals=6)
+    stylize_cells(filename_report,'Alignment Summary',['F41','G41'],unbold=True,align='center',number_decimals=3)
+    stylize_cells(filename_report,'Alignment Summary',['H41','H41'],unbold=True,align='center',thick_right=True,number_decimals=3)
+    
+    autofit_columns(filename_report,'Transformations')
+    autofit_columns(filename_report,'USMN Raw')
+    no_fill(filename_report,'Transformations')
+    no_fill(filename_report,'USMN Raw')
+    
+    print("Progress: 42%  [##############################                                        ]",end="\r")
+    if module_type == 'F':
+        remove_rows(filename_report,'Alignment Summary',row_bounds='31:33')
+    elif module_type == 'Q':
+        remove_rows(filename_report,'Alignment Summary',row_bounds='29:33')
+    if num_magnets != 11:
+        magnet_list_blank_rows = str(11+num_magnets) + ':21'
+        remove_rows(filename_report,'Alignment Summary',row_bounds=magnet_list_blank_rows)
+    
+    remove_rows(filename_report,'Installation Fiducials',row_bounds='1:9')
+    remove_rows(filename_report,'Transformations',row_bounds='1:9')
+    remove_rows(filename_report,'USMN Raw',row_bounds='1:9')
+    
+    print("Progress: 56%  [########################################                              ]",end="\r")
+    stylize_cells(filename_report,'Installation Fiducials',['A1','A1'],align='center',border=False)
+    stylize_cells(filename_report,'Installation Fiducials',['C2','E3'],align='right',border=False)
+    stylize_cells(filename_report,'Installation Fiducials',['A2','B100'],align='left',border=False)
+    stylize_cells(filename_report,'Installation Fiducials',['C4','E100'],align='center',number_decimals=6,border=False)
+    
+    stylize_cells(filename_report,'Transformations',['A1','L700'], border=False)
+    stylize_cells(filename_report,'USMN Raw',['A1','J450'], border=False)
+    print("Progress: 70%  [##################################################                    ]",end="\r")
+    
+    autosize_row_height(filename_report,'Installation Fiducials',size='small')
+    autosize_row_height(filename_report,'Transformations')
+    autosize_row_height(filename_report,'USMN Raw')
+    wb = load_workbook(filename_report)
+    wb.active = 0
+    wb.save(filename_report)
+
+    savefile_to_pdf(filename_report)
+    print("Progress: 84%  [############################################################          ]",end="\r")
+
+    archive_filename = 'Archive\Report ' + module_name + ' Assembly Survey'
+    os.system('copy \"' + module_name + '\Report ' + module_name + ' Assembly Survey.xlsx' + '\" \"' + archive_filename + '.xlsx' + '\"')
+    os.system('copy \"' + module_name + '\Report ' + module_name + ' Assembly Survey.pdf' + '\" \"' + archive_filename + '.pdf' + '\"')
+
+    data = extract_RMS(filename_report,'Alignment Summary','C36:E36')
+    log_entry(filename_report,data)
+    print("Progress: 100% [######################################################################]")
+    print(module_name+" Report completed.\n",end="\n")
+    
+def generate_excel_reports(module_names):
+    
+    module_list = module_names.upper().split(' ')
+    module_list = list(filter(None, module_list))
+    for module in module_list:
+        generate_excel_report(module)
+
+module_names = widgets.Text(value='', description='Enter module name:', disabled=False,
+                            style = {'description_width': 'initial'}, layout=widgets.Layout(width="auto", height="auto"))
 button = widgets.Button(description="Create assembly survey report", layout=widgets.Layout(width="auto", height="auto"))
 button.on_click(on_button_clicked)
