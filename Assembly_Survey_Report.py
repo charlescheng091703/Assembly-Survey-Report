@@ -507,18 +507,30 @@ def savefile_to_pdf(excel_file):
         wb.Close()
         excel.Quit()
         
+def cdb_to_survey(module_name):
+    
+    survey_prefixes = {'DLMA':'DA','DLMB':'DB','FODO':'FD','QMQA':'QA','QMQB':'QB'}
+    module_type = module_name[0:4]
+    module_number =  int(module_name[-4:])
+    survey_number = int(module_number/10-100)
+    if survey_number < 10:
+        survey_number_str = '0' + str(survey_number)
+    else:
+        survey_number_str = str(survey_number)
+    return survey_prefixes[module_type] + '_' + survey_number_str
+        
 @widget_out.capture()
 def on_button_clicked(b):
 
     clear_output(wait=False)
-    if len(module_names.value) == 0:
+    if len(module_name.value) == 0:
         print(Fore.RED + "Please enter the module name." + Style.RESET_ALL)
     else:
-        generate_excel_reports(module_names.value)
+        generate_excel_report(module_name.value)
 
 def generate_excel_report(module_name):
     
-    print("\033[1mGenerating "+module_name+" Report...\033[0m",end="\n")
+    print("\033[1mGenerating "+module_name+" Report...\033[0m")
     filename_report = module_name + '/Report ' + module_name + ' Assembly Survey.xlsx'
     filename_report = os.path.abspath(filename_report)
     module_type = module_name[0]
@@ -530,16 +542,15 @@ def generate_excel_report(module_name):
         shutil.copy('Form_QMQ_SurveyReport.xlsx', filename_report)
     
     try:
-        df = read_csv(module_name+'/M1_VERTEX.csv',col_names=True)
+        df = read_csv(module_name+'/M_VERTEX.csv',col_names=True)
         M1_data = []
         M1_data.append(str(df.index.name))
         for i in df.columns:
             M1_data.append(float(i))
         write_excel_row(filename_report,'Alignment Summary',M1_data,'B41')
     except:
-        print("M1 data excluded...",end="\n")
+        print("M1 data excluded...")
 
-    print("Progress: 0%   [                                                                      ]",end="\r")
     df = read_csv(module_name+'/INFO.csv')
     data = extract_csv_data(df,['Survey Date:','Surveyor(s):','Instrument s/n:','SA Version:','SA Filename:'])
     data[4][0] = data[4][0][data[4][0].rfind('\\')+1:]
@@ -547,6 +558,7 @@ def generate_excel_report(module_name):
     data.append(date.today().strftime("%B %d, %Y"))
     write_excel_col(filename_report,'Alignment Summary',data,'C3')
     write_excel_col(filename_report,'Alignment Summary',[module_name],'B1')
+    print("Alignment Summary tab complete...")
     
     df = read_csv(module_name+'/CENTERS.csv',col_names=True)
     append_df_to_excel(filename_report,df,sheet_name="Alignment Summary",startcol=1,startrow=24)
@@ -556,13 +568,22 @@ def generate_excel_report(module_name):
     write_excel_col(filename_report, 'Alignment Summary', name, start_index='B11')
     write_excel_col(filename_report, 'Alignment Summary', url, start_index='C11')
     write_excel_col(filename_report, 'Alignment Summary', serial, start_index='E11')
-    print("Progress: 14%  [##########                                                            ]",end="\r")
+    
+    survey_name = cdb_to_survey(module_name)
+    write_excel_col(filename_report,'Alignment Summary',[survey_name],'C1')
+    
+    if module_type == 'Q':
+        RMS_data = ['N/A','N/A','N/A']
+    else:
+        RMS_data = extract_RMS(filename_report,'Alignment Summary','C36:E36')
     
     copy_paste_wrksht(module_name+'/FIDUCIALS.xls',filename_report,'Installation Fiducials')
     copy_paste_wrksht(module_name+'/TRANSFORMS.xls',filename_report,'Transformations')
     copy_paste_wrksht(module_name+'/USMN.xls',filename_report,'USMN Raw')
+    print("Installation Fiducials tab complete...")
+    print("Transformations tab complete...")
+    print("USMN Raw tab complete...")
     
-    print("Progress: 28%  [####################                                                  ]",end="\r")
     delete_images(filename_report,['Installation Fiducials','Transformations','USMN Raw'])
     
     stylize_cells(filename_report,'Alignment Summary',['F26','H33'],align='right',number_decimals=3,num_indent=2)
@@ -571,21 +592,24 @@ def generate_excel_report(module_name):
     stylize_cells(filename_report,'Alignment Summary',['C25','H25'],align='center',backgrd_color='00eef5e9')
     stylize_cells(filename_report,'Alignment Summary',['H25','H33'])
     stylize_cells(filename_report,'Alignment Summary',['B1','B1'],bold=True,align='center',border=False)
-    stylize_cells(filename_report,'Alignment Summary',['B41','B41'],unbold=True,align='center',backgrd_color='00fedcd6',thick_left=True)
-    stylize_cells(filename_report,'Alignment Summary',['C41','E41'],unbold=True,align='center',backgrd_color='00f2f2f2',number_decimals=6)
-    stylize_cells(filename_report,'Alignment Summary',['F41','G41'],unbold=True,align='center',number_decimals=3)
-    stylize_cells(filename_report,'Alignment Summary',['H41','H41'],unbold=True,align='center',thick_right=True,number_decimals=3)
+    stylize_cells(filename_report,'Alignment Summary',['C1','C1'],bold=True,align='center',border=False)
+    
+    if module_type != 'F':
+        stylize_cells(filename_report,'Alignment Summary',['B41','B41'],unbold=True,align='center',backgrd_color='00fedcd6',thick_left=True)
+        stylize_cells(filename_report,'Alignment Summary',['C41','E41'],unbold=True,align='center',backgrd_color='00f2f2f2',number_decimals=6)
+        stylize_cells(filename_report,'Alignment Summary',['F41','G41'],unbold=True,align='center',number_decimals=3)
+        stylize_cells(filename_report,'Alignment Summary',['H41','H41'],unbold=True,align='center',thick_right=True,number_decimals=3)
     
     autofit_columns(filename_report,'Transformations')
     autofit_columns(filename_report,'USMN Raw')
     no_fill(filename_report,'Transformations')
     no_fill(filename_report,'USMN Raw')
     
-    print("Progress: 42%  [##############################                                        ]",end="\r")
+    print("Stylizing report...")
     if module_type == 'F':
         remove_rows(filename_report,'Alignment Summary',row_bounds='31:33')
     elif module_type == 'Q':
-        remove_rows(filename_report,'Alignment Summary',row_bounds='29:33')
+        remove_rows(filename_report,'Alignment Summary',row_bounds='29:38')
     if num_magnets != 11:
         magnet_list_blank_rows = str(11+num_magnets) + ':21'
         remove_rows(filename_report,'Alignment Summary',row_bounds=magnet_list_blank_rows)
@@ -594,7 +618,6 @@ def generate_excel_report(module_name):
     remove_rows(filename_report,'Transformations',row_bounds='1:9')
     remove_rows(filename_report,'USMN Raw',row_bounds='1:9')
     
-    print("Progress: 56%  [########################################                              ]",end="\r")
     stylize_cells(filename_report,'Installation Fiducials',['A1','A1'],align='center',border=False)
     stylize_cells(filename_report,'Installation Fiducials',['C2','E3'],align='right',border=False)
     stylize_cells(filename_report,'Installation Fiducials',['A2','B100'],align='left',border=False)
@@ -602,7 +625,6 @@ def generate_excel_report(module_name):
     
     stylize_cells(filename_report,'Transformations',['A1','L700'], border=False)
     stylize_cells(filename_report,'USMN Raw',['A1','J450'], border=False)
-    print("Progress: 70%  [##################################################                    ]",end="\r")
     
     autosize_row_height(filename_report,'Installation Fiducials',size='small')
     autosize_row_height(filename_report,'Transformations')
@@ -610,27 +632,21 @@ def generate_excel_report(module_name):
     wb = load_workbook(filename_report)
     wb.active = 0
     wb.save(filename_report)
+    print("Assembly survey report created successfully...")
 
     savefile_to_pdf(filename_report)
-    print("Progress: 84%  [############################################################          ]",end="\r")
+    print("Alignment summary tab exported to PDF...")
 
     archive_filename = 'Archive\Report ' + module_name + ' Assembly Survey'
     os.system('copy \"' + module_name + '\Report ' + module_name + ' Assembly Survey.xlsx' + '\" \"' + archive_filename + '.xlsx' + '\"')
     os.system('copy \"' + module_name + '\Report ' + module_name + ' Assembly Survey.pdf' + '\" \"' + archive_filename + '.pdf' + '\"')
-
-    data = extract_RMS(filename_report,'Alignment Summary','C36:E36')
-    log_entry(filename_report,data)
-    print("Progress: 100% [######################################################################]")
-    print(module_name+" Report completed.\n",end="\n")
+    print("Report saved to archive folder...")
     
-def generate_excel_reports(module_names):
-    
-    module_list = module_names.upper().split(' ')
-    module_list = list(filter(None, module_list))
-    for module in module_list:
-        generate_excel_report(module)
+    log_entry(filename_report,RMS_data)
+    print("Entry created in log sheet...")
+    print("Done!")
 
-module_names = widgets.Text(value='', description='Enter module name:', disabled=False,
+module_name = widgets.Text(value='', description='Enter module name:', disabled=False,
                             style = {'description_width': 'initial'}, layout=widgets.Layout(width="auto", height="auto"))
 button = widgets.Button(description="Create assembly survey report", layout=widgets.Layout(width="auto", height="auto"))
 button.on_click(on_button_clicked)
