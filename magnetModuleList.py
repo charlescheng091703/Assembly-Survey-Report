@@ -17,7 +17,7 @@ CDBItemID['QMQB'] = 110370
 MagnetOrder = {}
 MagnetOrder['DLMA'] = ["Q1","FC1","Q2","M1","Q3","S1","Q4","S2","Q5","FC2","S3"]
 MagnetOrder['DLMB'] = ["S3","FC2","Q5","S2","Q4","S1","Q3","M1","Q2","FC1","Q1"]
-MagnetOrder['FODO'] = ["A:M3","A:Q8","A:M4","B:Q8:","B:M3"]
+MagnetOrder['FODO'] = ["A:M3","A:Q8","A:M4","B:Q8","B:M3"]
 MagnetOrder['QMQA'] = ["Q6","M2","Q7"]
 MagnetOrder['QMQB'] = ["Q7","M2","Q6"]
 
