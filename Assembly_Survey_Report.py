@@ -594,7 +594,7 @@ def generate_excel_report(module_name):
     stylize_cells(filename_report,'Alignment Summary',['B1','B1'],bold=True,align='center',border=False)
     stylize_cells(filename_report,'Alignment Summary',['C1','C1'],bold=True,align='center',border=False)
     
-    if module_type != 'F':
+    if module_type != 'F' and module_type != 'Q':
         stylize_cells(filename_report,'Alignment Summary',['B41','B41'],unbold=True,align='center',backgrd_color='00fedcd6',thick_left=True)
         stylize_cells(filename_report,'Alignment Summary',['C41','E41'],unbold=True,align='center',backgrd_color='00f2f2f2',number_decimals=6)
         stylize_cells(filename_report,'Alignment Summary',['F41','G41'],unbold=True,align='center',number_decimals=3)
