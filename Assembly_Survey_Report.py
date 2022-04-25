@@ -587,7 +587,7 @@ def generate_excel_report(module_name):
     delete_images(filename_report,['Installation Fiducials','Transformations','USMN Raw'])
     
     stylize_cells(filename_report,'Alignment Summary',['F26','H33'],align='right',number_decimals=3,num_indent=2)
-    stylize_cells(filename_report,'Alignment Summary',['C26','E33'],align='right',number_decimals=6,backgrd_color='00ffffcd',num_indent=2)
+    stylize_cells(filename_report,'Alignment Summary',['C26','E33'],align='center',number_decimals=6,backgrd_color='00ffffcd')
     stylize_cells(filename_report,'Alignment Summary',['B25','B33'],align='center',backgrd_color='00eef5e9')
     stylize_cells(filename_report,'Alignment Summary',['C25','H25'],align='center',backgrd_color='00eef5e9')
     stylize_cells(filename_report,'Alignment Summary',['H25','H33'])
